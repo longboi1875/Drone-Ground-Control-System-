@@ -36,3 +36,17 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# Python
+/.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+/.pytest_cache/
+/.ruff_cache/
+
+# SkyLink runtime data
+/data/*.db
+/data/*.db-*
+/data/benchmarks/*.json
+/data/benchmarks/*.csv

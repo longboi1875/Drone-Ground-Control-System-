@@ -1,0 +1,50 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "skylink-mission-service"
+version = "0.1.0"
+description = "Local PX4 mission, telemetry, logging, and link-test service"
+requires-python = ">=3.12"
+dependencies = [
+  "aiosqlite>=0.21,<1",
+  "fastapi>=0.116,<1",
+  "mavsdk>=3.15,<4",
+  "pydantic>=2.11,<3",
+  "pydantic-settings>=2.10,<3",
+  "uvicorn[standard]>=0.35,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx>=0.28,<1",
+  "mypy>=1.17,<2",
+  "pytest>=8.4,<9",
+  "pytest-asyncio>=1.1,<2",
+  "ruff>=0.12,<1",
+]
+
+[project.scripts]
+skylink-api = "skylink.main:run"
+skylink-link = "skylink.link_proxy:run"
+skylink-benchmark = "skylink.benchmark:run"
+
+[tool.hatch.build.targets.wheel]
+packages = ["mission_service/skylink"]
+
+[tool.pytest.ini_options]
+testpaths = ["mission_service/tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["skylink"]
