@@ -13,7 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Untitled site',
+  title: 'SkyLink Ground Station',
+  description: 'Local PX4 mission control, telemetry, and link testing.',
 };
 
 export default function RootLayout({
