@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react';
 import L from 'leaflet';
-import { MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap } from 'react-leaflet';
-import type { TelemetrySnapshot } from '@/lib/contracts';
+import { MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap, useMapEvents } from 'react-leaflet';
+import type { TelemetrySnapshot, Waypoint } from '@/lib/contracts';
 import 'leaflet/dist/leaflet.css';
 
 const droneIcon = L.divIcon({
@@ -20,6 +20,15 @@ const homeIcon = L.divIcon({
   iconSize: [26, 26],
 });
 
+function waypointIcon(index: number) {
+  return L.divIcon({
+    className: '',
+    html: `<span class="waypoint-marker">${index + 1}</span>`,
+    iconAnchor: [14, 14],
+    iconSize: [28, 28],
+  });
+}
+
 function TrackVehicle({ telemetry }: { telemetry: TelemetrySnapshot }) {
   const map = useMap();
   useEffect(() => {
@@ -28,10 +37,23 @@ function TrackVehicle({ telemetry }: { telemetry: TelemetrySnapshot }) {
   return null;
 }
 
-export function MissionMap({ telemetry, home }: { telemetry: TelemetrySnapshot; home: { latitudeDeg: number; longitudeDeg: number } }) {
+function MapClick({ onAdd }: { onAdd?: (latitudeDeg: number, longitudeDeg: number) => void }) {
+  useMapEvents({ click: (event) => onAdd?.(event.latlng.lat, event.latlng.lng) });
+  return null;
+}
+
+export function MissionMap({ telemetry, home, waypoints = [], onAddWaypoint, onMoveWaypoint }: {
+  telemetry: TelemetrySnapshot;
+  home: { latitudeDeg: number; longitudeDeg: number };
+  waypoints?: Waypoint[];
+  onAddWaypoint?: (latitudeDeg: number, longitudeDeg: number) => void;
+  onMoveWaypoint?: (id: string, latitudeDeg: number, longitudeDeg: number) => void;
+}) {
   const aircraft: [number, number] = [telemetry.position.latitudeDeg, telemetry.position.longitudeDeg];
   const origin: [number, number] = [home.latitudeDeg, home.longitudeDeg];
-  const route: [number, number][] = [origin, [49.2618, -123.2438], [49.263, -123.2472], [49.2612, -123.2495], origin];
+  const route: [number, number][] = waypoints.length
+    ? [origin, ...waypoints.map((waypoint) => [waypoint.latitudeDeg, waypoint.longitudeDeg] as [number, number])]
+    : [origin, [49.2618, -123.2438], [49.263, -123.2472], [49.2612, -123.2495], origin];
 
   return (
     <MapContainer center={aircraft} zoom={16} zoomControl={false} attributionControl className="h-full w-full">
@@ -40,6 +62,23 @@ export function MissionMap({ telemetry, home }: { telemetry: TelemetrySnapshot; 
       <Polyline positions={[origin, aircraft]} pathOptions={{ color: '#f5b942', weight: 3, opacity: 0.9 }} />
       <Marker position={origin} icon={homeIcon}><Tooltip>Home</Tooltip></Marker>
       <Marker position={aircraft} icon={droneIcon}><Tooltip permanent direction="top">X500 · {telemetry.position.relativeAltitudeM.toFixed(1)} m</Tooltip></Marker>
+      {waypoints.map((waypoint, index) => (
+        <Marker
+          key={waypoint.id}
+          position={[waypoint.latitudeDeg, waypoint.longitudeDeg]}
+          icon={waypointIcon(index)}
+          draggable
+          eventHandlers={{
+            dragend: (event) => {
+              const position = event.target.getLatLng();
+              onMoveWaypoint?.(waypoint.id, position.lat, position.lng);
+            },
+          }}
+        >
+          <Tooltip>Waypoint {index + 1} · {waypoint.relativeAltitudeM} m</Tooltip>
+        </Marker>
+      ))}
+      <MapClick onAdd={onAddWaypoint} />
       <TrackVehicle telemetry={telemetry} />
     </MapContainer>
   );

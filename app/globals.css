@@ -55,6 +55,7 @@ button { font: inherit; }
 .drone-marker { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--cyan); border-radius: 50%; color: var(--cyan); background: #07151ee8; box-shadow: 0 0 0 8px #54d6ff18, 0 0 22px #54d6ff66; transform: rotate(20deg); }
 .drone-marker span { transform: translateY(-1px); }
 .home-marker { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 2px; border: 1px solid var(--amber); background: #241e11; color: var(--amber); font: 800 12px var(--font-geist-mono); }
+.waypoint-marker { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--cyan); border-radius: 50%; background: #0b2330; color: #dff8ff; box-shadow: 0 0 0 4px #54d6ff17; font: 700 11px var(--font-geist-mono); }
 .leaflet-tooltip { border: 1px solid #315064; background: #0a1720eb; color: #dcecf1; box-shadow: none; font: 11px var(--font-geist-mono); }
 .map-readout, .map-legend { position: absolute; z-index: 700; display: flex; align-items: center; border: 1px solid var(--border); background: #071019de; backdrop-filter: blur(10px); color: #9bb0ba; font: 11px var(--font-geist-mono); }
 .map-readout { top: 16px; left: 16px; gap: 8px; padding: 9px 11px; }
@@ -88,6 +89,36 @@ button { font: inherit; }
 .command-bar button { padding: 9px 4px; border: 1px solid #2b4352; border-radius: 3px; background: #101f2a; color: #79909d; font: 700 11px var(--font-geist-mono); }
 .command-bar button:disabled { cursor: not-allowed; opacity: .65; }
 .command-note { margin: 3px 18px 18px; color: #647b88; font-size: 12px; }
+.link-state.fallback { color: var(--amber); }
+.link-state.fallback .pulse-dot { background: var(--amber); box-shadow: 0 0 0 5px #f5b94218; }
+.station-tabs { gap: 0; }
+.station-tab-list { width: 100%; height: 42px; padding: 0 10px; border-bottom: 1px solid var(--border); }
+.station-tab-list button { font: 700 10px var(--font-geist-mono); letter-spacing: .05em; color: #708895; }
+.station-tab-list button[data-active] { color: var(--cyan); }
+.section-kicker { margin: 0; padding: 15px 18px 8px; color: #718b99; font: 700 10px var(--font-geist-mono); letter-spacing: .1em; }
+.operation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 4px 18px 10px; }
+.operation-grid button, .panel-actions button, .preset-grid button, .replay-controls button, .flight-list button { min-height: 36px; border: 1px solid #2c4656; border-radius: 3px; background: #10212d; color: #b8cbd3; font: 700 11px var(--font-geist-mono); cursor: pointer; }
+.operation-grid button:hover:not(:disabled), .panel-actions button:hover:not(:disabled), .preset-grid button:hover, .replay-controls button:hover { border-color: var(--cyan); color: var(--cyan); }
+.operation-grid button:disabled, .panel-actions button:disabled { cursor: not-allowed; opacity: .45; }
+.operation-grid .danger-command { border-color: #5a3939; color: #e2a7a2; }
+.confirm-dialog { border-color: #2d4857; background: #0b1722; color: #e6f1f5; }
+.mission-editor, .history-panel, .link-panel { padding: 15px 18px 22px; }
+.mission-editor label, .link-panel label { display: grid; gap: 7px; color: #7c94a0; font: 700 10px var(--font-geist-mono); letter-spacing: .08em; }
+.mission-editor input { width: 100%; height: 36px; padding: 0 10px; border: 1px solid #2b4352; border-radius: 3px; background: #08141d; color: #e8f2f5; outline: none; font: 13px var(--font-geist-sans); }
+.mission-editor input:focus { border-color: var(--cyan); }
+.editor-help { color: #657e8b; font-size: 12px; line-height: 1.5; }
+.waypoint-list, .flight-list { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 6px; }
+.waypoint-list li { display: grid; grid-template-columns: 26px 1fr 25px 25px 25px; gap: 5px; align-items: center; padding: 8px; border: 1px solid #203846; background: #0a1822; }
+.waypoint-number { display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid var(--cyan); border-radius: 50%; color: var(--cyan); font: 700 10px var(--font-geist-mono); }
+.waypoint-list strong, .waypoint-list small { display: block; }.waypoint-list strong { color: #d5e4e9; font-size: 12px; }.waypoint-list small { margin-top: 2px; color: #627c89; font: 9px var(--font-geist-mono); }
+.waypoint-list button { display: grid; place-items: center; width: 24px; height: 26px; padding: 0; border: 0; background: transparent; color: #76909c; cursor: pointer; }.waypoint-list button:hover { color: var(--cyan); }
+.empty-state { padding: 24px 12px; border: 1px dashed #294150; color: #607985; text-align: center; font-size: 12px; }
+.panel-actions { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 7px; margin-top: 12px; }.panel-actions button { display: flex; align-items: center; justify-content: center; gap: 6px; }.panel-actions .primary-action { border-color: #317188; background: #123242; color: var(--cyan); }
+.replay-controls { display: grid; grid-template-columns: 38px 38px repeat(4, 1fr); gap: 5px; }.replay-controls button { display: grid; place-items: center; min-width: 0; }.replay-controls button.active { border-color: var(--cyan); color: var(--cyan); background: #123242; }
+.flight-list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px; border: 1px solid #203846; background: #0a1822; }.flight-list strong, .flight-list small { display: block; }.flight-list strong { color: #d5e4e9; font-size: 12px; }.flight-list small { margin-top: 3px; color: #627c89; font-size: 10px; }.flight-list button { display: flex; align-items: center; gap: 5px; min-height: 30px; padding: 0 8px; }
+.preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 20px; }.preset-grid button.active { border-color: var(--cyan); color: var(--cyan); background: #123242; }
+.link-panel label { margin: 16px 0; grid-template-columns: 1fr auto; }.link-panel label > div { grid-column: 1 / -1; }.link-panel output { color: #d5e4e9; }
+.link-stats { display: grid; gap: 6px; margin-top: 18px; }.link-stats div { display: grid; grid-template-columns: 1fr auto auto auto; gap: 10px; padding: 8px; border: 1px solid #203846; color: #6e8794; font: 9px var(--font-geist-mono); }.link-stats strong { color: #a8bcc5; }
 
 @keyframes pulse { 50% { box-shadow: 0 0 0 9px #5ce0a000; } }
 @media (max-width: 900px) {
