@@ -1,0 +1,62 @@
+import type { CommandRecord, CommandType, FlightSummary, LinkProfile, Waypoint } from './contracts';
+
+export const API_BASE = process.env.NEXT_PUBLIC_SKYLINK_API ?? 'http://127.0.0.1:8000';
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers: { 'Content-Type': 'application/json', ...init?.headers },
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(body.detail ?? `request failed (${response.status})`);
+  }
+  return response.json() as Promise<T>;
+}
+
+export async function sendCommand(type: CommandType, parameters: Record<string, unknown> = {}) {
+  const id = crypto.randomUUID();
+  const result = await request<{ command: CommandRecord }>('/api/commands', {
+    method: 'POST',
+    body: JSON.stringify({ id, type, parameters, createdAt: new Date().toISOString() }),
+  });
+  return result.command;
+}
+
+export async function commandStatus(id: string) {
+  return request<CommandRecord>(`/api/commands/${id}`);
+}
+
+export async function saveMission(name: string, waypoints: Waypoint[]) {
+  return request<{ id: string }>('/api/missions', {
+    method: 'POST',
+    body: JSON.stringify({ name, waypoints }),
+  });
+}
+
+export async function uploadMission(id: string) {
+  return request<{ acknowledgement: string }>(`/api/missions/${id}/upload`, { method: 'POST' });
+}
+
+export async function listFlights() {
+  return request<FlightSummary[]>('/api/flights');
+}
+
+export async function startReplay(id: string) {
+  return request(`/api/flights/${id}/replay`, { method: 'POST' });
+}
+
+export async function controlReplay(action: string, speed = 1, positionSeconds = 0) {
+  return request('/api/replay', {
+    method: 'PUT',
+    body: JSON.stringify({ action, speed, positionSeconds }),
+  });
+}
+
+export async function getLinkProfile() {
+  return request<{ profile: LinkProfile; stats: Record<string, Record<string, number>> }>('/api/link-profile');
+}
+
+export async function setLinkProfile(profile: LinkProfile) {
+  return request<LinkProfile>('/api/link-profile', { method: 'PUT', body: JSON.stringify(profile) });
+}
