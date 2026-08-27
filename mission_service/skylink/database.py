@@ -123,7 +123,7 @@ class Database:
     async def create_command(
         self, request: CommandRequest, flight_id: UUID | None
     ) -> tuple[CommandRecord, bool]:
-        payload = request.model_dump_json(exclude={"createdAt"})
+        payload = request.model_dump_json()
         request_hash = _canonical_request(request)
         existing = await self.get_command(request.id)
         if existing:

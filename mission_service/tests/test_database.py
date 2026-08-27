@@ -19,6 +19,7 @@ async def test_command_idempotency(tmp_path) -> None:
     assert first_created is True
     assert second_created is False
     assert first.id == second.id
+    assert second.createdAt == request.createdAt
 
 
 @pytest.mark.asyncio
