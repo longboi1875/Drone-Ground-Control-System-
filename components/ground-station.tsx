@@ -6,6 +6,7 @@ import { BatteryMedium, Crosshair, Gauge, MapPin, Navigation, Radio, Satellite, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CommandControls, FlightHistory, LinkPanel, MissionPanel } from '@/components/control-panel';
 import { useSkyLink } from '@/hooks/use-skylink';
+import { useWebMcp } from '@/hooks/use-webmcp';
 import type { Waypoint } from '@/lib/contracts';
 
 const MissionMap = dynamic(() => import('./mission-map').then((module) => module.MissionMap), { ssr: false });
@@ -21,6 +22,7 @@ export function GroundStation() {
     { id: crypto.randomUUID(), latitudeDeg: 49.263, longitudeDeg: -123.2472, relativeAltitudeM: 35, speedMps: 8, acceptanceRadiusM: 3, flyThrough: true },
     { id: crypto.randomUUID(), latitudeDeg: 49.2612, longitudeDeg: -123.2495, relativeAltitudeM: 25, speedMps: 6, acceptanceRadiusM: 3, flyThrough: false },
   ]);
+  useWebMcp(addEvent);
   const time = new Date(telemetry.timestamp).toLocaleTimeString([], { hour12: false });
   const stateLabel = serviceOnline ? telemetry.connection.toUpperCase() : 'DEMO FALLBACK';
 
