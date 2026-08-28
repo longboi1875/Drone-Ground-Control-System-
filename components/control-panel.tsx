@@ -39,7 +39,7 @@ export function CommandControls({ enabled, addEvent }: { enabled: boolean; addEv
       <div className="operation-grid">
         {(['arm', 'takeoff', 'rtl', 'land'] as const).map((type) => (
           <AlertDialog key={type}>
-            <AlertDialogTrigger render={<button className={type === 'land' ? 'danger-command' : ''} disabled={!enabled || Boolean(busy)} />}>
+            <AlertDialogTrigger render={<button aria-label={type.toUpperCase()} className={type === 'land' ? 'danger-command' : ''} disabled={!enabled || Boolean(busy)} />}>
               {busy === type ? 'SENDING…' : type.toUpperCase()}
             </AlertDialogTrigger>
             <AlertDialogContent className="confirm-dialog">

@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION: Literal[1] = 1
 
 
 def utc_now() -> datetime:
@@ -134,5 +134,11 @@ class LinkStats(BaseModel):
 
 class ReplayControl(BaseModel):
     action: Literal["play", "pause", "seek", "restart", "stop"]
-    speed: Literal[0.5, 1.0, 2.0, 4.0] = 1.0
+    speed: float = 1.0
     positionSeconds: float = Field(default=0, ge=0)
+
+    @model_validator(mode="after")
+    def validate_speed(self) -> "ReplayControl":
+        if self.speed not in {0.5, 1.0, 2.0, 4.0}:
+            raise ValueError("speed must be one of 0.5, 1, 2, or 4")
+        return self

@@ -48,3 +48,7 @@ select = ["E", "F", "I", "UP", "B", "ASYNC"]
 python_version = "3.12"
 strict = true
 packages = ["skylink"]
+
+[[tool.mypy.overrides]]
+module = ["mavsdk", "mavsdk.*"]
+ignore_missing_imports = true

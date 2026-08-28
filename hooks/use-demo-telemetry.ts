@@ -38,8 +38,8 @@ export function useDemoTelemetry() {
 
   const events = useMemo<GroundEvent[]>(() => [
     { id: 'e1', timestamp: telemetry.timestamp, severity: 'success', message: 'Telemetry link healthy' },
-    { id: 'e2', timestamp: new Date(Date.now() - 18_000).toISOString(), severity: 'info', message: 'Mission uploaded · 4 waypoints' },
-    { id: 'e3', timestamp: new Date(Date.now() - 31_000).toISOString(), severity: 'info', message: 'Demo vehicle connected' },
+    { id: 'e2', timestamp: new Date(Date.parse(telemetry.timestamp) - 18_000).toISOString(), severity: 'info', message: 'Mission uploaded · 4 waypoints' },
+    { id: 'e3', timestamp: new Date(Date.parse(telemetry.timestamp) - 31_000).toISOString(), severity: 'info', message: 'Demo vehicle connected' },
   ], [telemetry.timestamp]);
 
   return { telemetry, events, home: HOME };

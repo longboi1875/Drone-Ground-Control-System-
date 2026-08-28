@@ -1,4 +1,6 @@
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any
 from uuid import UUID
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, status
@@ -15,7 +17,7 @@ def create_app(config: Settings | None = None, service: MissionService | None = 
     mission_service = service or MissionService(config)
 
     @asynccontextmanager
-    async def lifespan(_: FastAPI):
+    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         await mission_service.start()
         try:
             yield
@@ -57,7 +59,7 @@ def create_app(config: Settings | None = None, service: MissionService | None = 
             return
 
     @app.post("/api/commands", status_code=status.HTTP_202_ACCEPTED)
-    async def issue_command(request: CommandRequest):
+    async def issue_command(request: CommandRequest) -> dict[str, Any]:
         try:
             record, created = await mission_service.issue_command(request)
         except CommandConflictError as exc:
@@ -67,7 +69,7 @@ def create_app(config: Settings | None = None, service: MissionService | None = 
         return {"created": created, "command": record}
 
     @app.get("/api/commands/{command_id}")
-    async def get_command(command_id: UUID):
+    async def get_command(command_id: UUID) -> Any:
         record = await mission_service.database.get_command(command_id)
         if record is None:
             raise HTTPException(status_code=404, detail="command not found")
@@ -96,18 +98,18 @@ def create_app(config: Settings | None = None, service: MissionService | None = 
             raise HTTPException(status_code=423, detail=str(exc)) from exc
 
     @app.get("/api/flights")
-    async def list_flights():
+    async def list_flights() -> list[dict[str, Any]]:
         return await mission_service.database.list_flights()
 
     @app.get("/api/flights/{flight_id}")
-    async def get_flight(flight_id: UUID):
+    async def get_flight(flight_id: UUID) -> dict[str, Any]:
         frames = await mission_service.database.telemetry_for_flight(flight_id)
         if not frames:
             raise HTTPException(status_code=404, detail="flight not found")
         return {"id": flight_id, "telemetry": frames}
 
     @app.post("/api/flights/{flight_id}/replay")
-    async def start_replay(flight_id: UUID):
+    async def start_replay(flight_id: UUID) -> dict[str, Any]:
         try:
             await mission_service.replay.start(flight_id)
         except ValueError as exc:
@@ -115,7 +117,7 @@ def create_app(config: Settings | None = None, service: MissionService | None = 
         return {"status": "playing", "flightId": flight_id}
 
     @app.put("/api/replay")
-    async def control_replay(control: ReplayControl):
+    async def control_replay(control: ReplayControl) -> dict[str, Any]:
         await mission_service.replay.control(control)
         return {
             "active": mission_service.replay.active,
@@ -124,7 +126,7 @@ def create_app(config: Settings | None = None, service: MissionService | None = 
         }
 
     @app.get("/api/link-profile")
-    async def get_link_profile():
+    async def get_link_profile() -> dict[str, Any]:
         return {
             "profile": app.state.link_profile,
             "stats": mission_service.link_proxy.stats()

@@ -68,8 +68,8 @@ class LinkProxy:
         app_transport, _ = await loop.create_datagram_endpoint(
             lambda: RelayProtocol(self._from_app), local_addr=("127.0.0.1", self.relay_port)
         )
-        self.vehicle_transport = vehicle_transport  # type: ignore[assignment]
-        self.app_transport = app_transport  # type: ignore[assignment]
+        self.vehicle_transport = vehicle_transport
+        self.app_transport = app_transport
 
     def close(self) -> None:
         if self.vehicle_transport:

@@ -3,13 +3,16 @@ import type { CommandRecord, CommandType, FlightSummary, LinkProfile, Waypoint }
 export const API_BASE = process.env.NEXT_PUBLIC_SKYLINK_API ?? 'http://127.0.0.1:8000';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  headers.set('Content-Type', 'application/json');
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
+    headers,
   });
   if (!response.ok) {
-    const body = await response.json().catch(() => ({ detail: response.statusText }));
-    throw new Error(body.detail ?? `request failed (${response.status})`);
+    const body: unknown = await response.json().catch(() => undefined);
+    const detail = typeof body === 'object' && body !== null && 'detail' in body ? String(body.detail) : response.statusText;
+    throw new Error(detail || `request failed (${response.status})`);
   }
   return response.json() as Promise<T>;
 }
