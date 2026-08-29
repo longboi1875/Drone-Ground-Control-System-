@@ -1,10 +1,12 @@
 import asyncio
 import contextlib
+from time import monotonic
 from uuid import UUID, uuid4
 
 from skylink.broadcast import Broadcast
 from skylink.config import Settings
 from skylink.database import CommandConflictError, Database
+from skylink.heartbeat import connection_state
 from skylink.link_proxy import LinkProxy
 from skylink.models import (
     CommandRecord,
@@ -38,6 +40,8 @@ class MissionService:
         self.flight_id: UUID | None = None
         self.latest: TelemetrySnapshot | None = None
         self._telemetry_task: asyncio.Task[None] | None = None
+        self._heartbeat_task: asyncio.Task[None] | None = None
+        self._last_telemetry_at: float | None = None
         self._dispatching: set[UUID] = set()
 
     async def start(self) -> None:
@@ -51,13 +55,15 @@ class MissionService:
             self.config.mode,
         )
         self._telemetry_task = asyncio.create_task(self._stream_telemetry())
+        self._heartbeat_task = asyncio.create_task(self._monitor_heartbeat())
         await self.emit("Vehicle service started", "success", "connection")
 
     async def stop(self) -> None:
-        if self._telemetry_task:
-            self._telemetry_task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._telemetry_task
+        for task in (self._telemetry_task, self._heartbeat_task):
+            if task:
+                task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await task
         await self.replay.stop()
         await self.vehicle.close()
         if self.link_proxy:
@@ -70,6 +76,7 @@ class MissionService:
         while True:
             try:
                 async for snapshot in self.vehicle.telemetry():
+                    self._last_telemetry_at = monotonic()
                     self.latest = snapshot
                     if self.flight_id and not self.replay.active:
                         await self.database.log_telemetry(self.flight_id, snapshot)
@@ -82,6 +89,28 @@ class MissionService:
                 await self.emit(f"Telemetry disconnected: {exc}", "warning", "connection")
                 await asyncio.sleep(backoff)
                 backoff = min(8.0, backoff * 2)
+
+    async def _monitor_heartbeat(self) -> None:
+        previous = None
+        while True:
+            await asyncio.sleep(0.5)
+            if self.latest is None or self._last_telemetry_at is None or self.replay.active:
+                continue
+            age_ms = int((monotonic() - self._last_telemetry_at) * 1000)
+            state = connection_state(
+                age_ms, self.config.degraded_after_ms, self.config.lost_after_ms
+            )
+            if state != previous and state.value != "healthy":
+                await self.emit(f"Vehicle link {state.value}", "warning", "connection")
+            if previous is not None and previous.value != "healthy" and state.value == "healthy":
+                await self.emit("Vehicle link recovered", "success", "connection")
+            previous = state
+            if state.value != "healthy":
+                status = self.latest.model_copy(
+                    update={"connection": state, "heartbeatAgeMs": age_ms}
+                )
+                self.latest = status
+                await self.telemetry_bus.publish(status)
 
     async def issue_command(self, request: CommandRequest) -> tuple[CommandRecord, bool]:
         if self.replay.active:
@@ -116,6 +145,7 @@ class MissionService:
 
     async def emit(self, message: str, severity: str = "info", kind: str = "system") -> None:
         event = GroundEvent(message=message, severity=severity, kind=kind)  # type: ignore[arg-type]
+        await self.database.log_event(self.flight_id, event)
         await self.event_bus.publish(event)
 
     async def save_mission(self, mission: Mission) -> None:

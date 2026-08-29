@@ -10,6 +10,7 @@ from skylink.models import (
     CommandRecord,
     CommandRequest,
     CommandState,
+    GroundEvent,
     Mission,
     TelemetrySnapshot,
     utc_now,
@@ -97,6 +98,19 @@ class Database:
             await db.execute(
                 "INSERT INTO telemetry(flight_id, captured_at, payload) VALUES (?, ?, ?)",
                 (str(flight_id), snapshot.timestamp.isoformat(), snapshot.model_dump_json()),
+            )
+            await db.commit()
+
+    async def log_event(self, flight_id: UUID | None, event: GroundEvent) -> None:
+        async with aiosqlite.connect(self.path) as db:
+            await db.execute(
+                "INSERT INTO events(id, flight_id, captured_at, payload) VALUES (?, ?, ?, ?)",
+                (
+                    str(event.id),
+                    str(flight_id) if flight_id else None,
+                    event.timestamp.isoformat(),
+                    event.model_dump_json(),
+                ),
             )
             await db.commit()
 

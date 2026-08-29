@@ -19,27 +19,41 @@ export function useSkyLink() {
     let telemetrySocket: WebSocket | undefined;
     let eventSocket: WebSocket | undefined;
     let closed = false;
+    let retryTimer: number | undefined;
+    let retryDelay = 500;
 
     async function connect() {
       try {
         const response = await fetch(`${API_BASE}/api/health`);
-        if (!response.ok || closed) return;
+        if (!response.ok || closed) throw new Error('mission service unavailable');
         setServiceOnline(true);
+        retryDelay = 500;
         telemetrySocket = new WebSocket(websocketUrl('/ws/telemetry'));
         eventSocket = new WebSocket(websocketUrl('/ws/events'));
         telemetrySocket.onmessage = (message) => setLiveTelemetry(JSON.parse(message.data));
-        telemetrySocket.onclose = () => setServiceOnline(false);
+        telemetrySocket.onclose = () => {
+          setServiceOnline(false);
+          if (!closed) {
+            retryTimer = window.setTimeout(() => void connect(), retryDelay);
+            retryDelay = Math.min(8000, retryDelay * 2);
+          }
+        };
         eventSocket.onmessage = (message) => {
           const event = JSON.parse(message.data) as GroundEvent;
           setEvents((current) => [event, ...current].slice(0, 30));
         };
       } catch {
         setServiceOnline(false);
+        if (!closed) {
+          retryTimer = window.setTimeout(() => void connect(), retryDelay);
+          retryDelay = Math.min(8000, retryDelay * 2);
+        }
       }
     }
     void connect();
     return () => {
       closed = true;
+      window.clearTimeout(retryTimer);
       telemetrySocket?.close();
       eventSocket?.close();
     };
