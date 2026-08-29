@@ -113,7 +113,12 @@ button { font: inherit; }
 .waypoint-list strong, .waypoint-list small { display: block; }.waypoint-list strong { color: #d5e4e9; font-size: 12px; }.waypoint-list small { margin-top: 2px; color: #627c89; font: 9px var(--font-geist-mono); }
 .waypoint-list button { display: grid; place-items: center; width: 24px; height: 26px; padding: 0; border: 0; background: transparent; color: #76909c; cursor: pointer; }.waypoint-list button:hover { color: var(--cyan); }
 .empty-state { padding: 24px 12px; border: 1px dashed #294150; color: #607985; text-align: center; font-size: 12px; }
-.panel-actions { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 7px; margin-top: 12px; }.panel-actions button { display: flex; align-items: center; justify-content: center; gap: 6px; }.panel-actions .primary-action { border-color: #317188; background: #123242; color: var(--cyan); }
+.panel-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; margin-top: 12px; }.panel-actions button { display: flex; align-items: center; justify-content: center; gap: 6px; }.panel-actions .primary-action { border-color: #317188; background: #123242; color: var(--cyan); }
+.mission-runner { display: grid; grid-template-columns: 1.2fr .9fr 1.1fr; gap: 7px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #203846; }
+.mission-runner button { min-height: 34px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #2c4656; border-radius: 3px; background: #10212d; color: #b8cbd3; font: 700 10px var(--font-geist-mono); cursor: pointer; }
+.mission-runner button:hover:not(:disabled) { border-color: var(--cyan); color: var(--cyan); }
+.mission-runner button:disabled { cursor: not-allowed; opacity: .45; }
+.mission-runner [data-slot="native-select-wrapper"] { width: 100%; }
 .replay-controls { display: grid; grid-template-columns: 38px 38px repeat(4, 1fr); gap: 5px; }.replay-controls button { display: grid; place-items: center; min-width: 0; }.replay-controls button.active { border-color: var(--cyan); color: var(--cyan); background: #123242; }
 .flight-list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px; border: 1px solid #203846; background: #0a1822; }.flight-list strong, .flight-list small { display: block; }.flight-list strong { color: #d5e4e9; font-size: 12px; }.flight-list small { margin-top: 3px; color: #627c89; font-size: 10px; }.flight-list button { display: flex; align-items: center; gap: 5px; min-height: 30px; padding: 0 8px; }
 .preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 20px; }.preset-grid button.active { border-color: var(--cyan); color: var(--cyan); background: #123242; }

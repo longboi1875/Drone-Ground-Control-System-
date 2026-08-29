@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { ChevronDown, ChevronUp, Download, Pause, Play, RotateCcw, Trash2, Upload } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ChevronDown, ChevronUp, Download, FileUp, Flag, Pause, Play, RotateCcw, Trash2, Upload } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Slider } from '@/components/ui/slider';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { commandStatus, controlReplay, getLinkProfile, listFlights, saveMission, sendCommand, setLinkProfile, startReplay, uploadMission } from '@/lib/api';
 import type { CommandType, FlightSummary, GroundEvent, LinkProfile, Waypoint } from '@/lib/contracts';
 
@@ -68,6 +69,8 @@ export function MissionPanel({ waypoints, setWaypoints, addEvent, enabled }: {
 }) {
   const [missionId, setMissionId] = useState<string>();
   const [name, setName] = useState('Campus perimeter');
+  const [currentWaypoint, setCurrentWaypoint] = useState(0);
+  const importInput = useRef<HTMLInputElement>(null);
 
   function move(index: number, offset: number) {
     const next = [...waypoints];
@@ -89,16 +92,51 @@ export function MissionPanel({ waypoints, setWaypoints, addEvent, enabled }: {
 
   async function upload() {
     try {
-      let id = missionId;
-      if (!id) {
-        const mission = await saveMission(name, waypoints);
-        id = mission.id;
-        setMissionId(id);
-      }
-      const result = await uploadMission(id);
+      const mission = await saveMission(name, waypoints);
+      setMissionId(mission.id);
+      const result = await uploadMission(mission.id);
       addEvent(result.acknowledgement, 'success');
     } catch (error) {
       addEvent(error instanceof Error ? error.message : 'Mission upload failed', 'warning');
+    }
+  }
+
+  async function issueMissionCommand(type: 'start_mission' | 'set_current_waypoint') {
+    try {
+      const record = await sendCommand(
+        type,
+        type === 'set_current_waypoint' ? { index: currentWaypoint } : {},
+      );
+      addEvent(`${type === 'start_mission' ? 'Mission start' : `Waypoint ${currentWaypoint + 1}`} queued · #${record.id.slice(0, 8)}`);
+    } catch (error) {
+      addEvent(error instanceof Error ? error.message : 'Mission command failed', 'warning');
+    }
+  }
+
+  async function importMission(file: File | undefined) {
+    if (!file) return;
+    try {
+      const parsed = JSON.parse(await file.text()) as { name?: unknown; waypoints?: unknown };
+      if (typeof parsed.name !== 'string' || !Array.isArray(parsed.waypoints) || !parsed.waypoints.length) {
+        throw new Error('Mission JSON needs a name and at least one waypoint');
+      }
+      const imported = parsed.waypoints.map((item) => {
+        if (typeof item !== 'object' || item === null) throw new Error('Invalid waypoint');
+        const waypoint = item as Partial<Waypoint>;
+        if (![waypoint.latitudeDeg, waypoint.longitudeDeg, waypoint.relativeAltitudeM, waypoint.speedMps, waypoint.acceptanceRadiusM].every((value) => typeof value === 'number')) {
+          throw new Error('Every waypoint needs numeric position, altitude, speed, and radius');
+        }
+        return { ...waypoint, id: typeof waypoint.id === 'string' ? waypoint.id : crypto.randomUUID(), flyThrough: Boolean(waypoint.flyThrough) } as Waypoint;
+      });
+      setName(parsed.name);
+      setWaypoints(imported);
+      setMissionId(undefined);
+      setCurrentWaypoint(0);
+      addEvent(`Mission imported · ${imported.length} waypoints`, 'success');
+    } catch (error) {
+      addEvent(error instanceof Error ? error.message : 'Mission import failed', 'warning');
+    } finally {
+      if (importInput.current) importInput.current.value = '';
     }
   }
 
@@ -129,9 +167,18 @@ export function MissionPanel({ waypoints, setWaypoints, addEvent, enabled }: {
       </ol>
       {!waypoints.length && <div className="empty-state">No waypoints yet</div>}
       <div className="panel-actions">
+        <input ref={importInput} className="sr-only" type="file" accept="application/json,.json" onChange={(event) => void importMission(event.target.files?.[0])} />
+        <button onClick={() => importInput.current?.click()}><FileUp size={14} /> IMPORT</button>
         <button onClick={exportMission} disabled={!waypoints.length}><Download size={14} /> EXPORT</button>
         <button onClick={() => void persist()} disabled={!enabled || !waypoints.length}>SAVE</button>
         <button className="primary-action" onClick={() => void upload()} disabled={!enabled || !waypoints.length}><Upload size={14} /> UPLOAD</button>
+      </div>
+      <div className="mission-runner">
+        <button onClick={() => void issueMissionCommand('start_mission')} disabled={!enabled || !missionId}><Play size={14} /> START MISSION</button>
+        <NativeSelect aria-label="Current waypoint" value={String(currentWaypoint)} onChange={(event) => setCurrentWaypoint(Number(event.target.value))} disabled={!waypoints.length}>
+          {waypoints.map((waypoint, index) => <NativeSelectOption key={waypoint.id} value={index}>Waypoint {index + 1}</NativeSelectOption>)}
+        </NativeSelect>
+        <button onClick={() => void issueMissionCommand('set_current_waypoint')} disabled={!enabled || !missionId}><Flag size={14} /> SET CURRENT</button>
       </div>
     </div>
   );
