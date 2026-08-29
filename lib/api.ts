@@ -19,11 +19,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export async function sendCommand(type: CommandType, parameters: Record<string, unknown> = {}) {
   const id = crypto.randomUUID();
-  const result = await request<{ command: CommandRecord }>('/api/commands', {
-    method: 'POST',
-    body: JSON.stringify({ id, type, parameters, createdAt: new Date().toISOString() }),
-  });
-  return result.command;
+  const body = JSON.stringify({ id, type, parameters, createdAt: new Date().toISOString() });
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const result = await request<{ command: CommandRecord }>('/api/commands', {
+        method: 'POST',
+        body,
+      });
+      return result.command;
+    } catch (error) {
+      lastError = error;
+      if (attempt < 2) await new Promise((resolve) => window.setTimeout(resolve, 250 * 2 ** attempt));
+    }
+  }
+  throw lastError;
 }
 
 export async function commandStatus(id: string) {

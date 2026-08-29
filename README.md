@@ -60,7 +60,7 @@ Benchmark output is written to `data/benchmarks/reliability.json` and `.csv`. Re
 
 ## Reliability boundary
 
-The browser retries with the same UUID, and the mission service persists and deduplicates that UUID. Reusing an ID with a different payload returns `409`. MAVSDK then uses MAVLink command acknowledgements for the PX4 hop. This prevents duplicate dispatch within a running service, but it is not crash-proof end-to-end exactly-once execution; that would require a custom onboard receiver that understands the same application command ID.
+The browser retries transient submissions with the same UUID, and the mission service persists and deduplicates that UUID. Reusing an ID with a different payload returns `409`. MAVSDK then uses MAVLink command acknowledgements for the PX4 hop. This prevents duplicate dispatch within a running service, but it is not crash-proof end-to-end exactly-once execution; that would require a custom onboard receiver that understands the same application command ID.
 
 ## Safety
 
