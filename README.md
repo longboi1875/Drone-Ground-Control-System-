@@ -32,6 +32,8 @@ The supported macOS setup is intentionally separate because it installs a large 
 make px4
 ```
 
+The setup supports headless simulation without an administrator password. For a visible Gazebo window, install XQuartz separately with `brew install --cask xquartz` or run `SKYLINK_INSTALL_XQUARTZ=1 ./scripts/setup_px4.sh`. PX4 is kept in the sibling `SkyLink-PX4` directory because its nested macOS build does not handle spaces in checkout paths.
+
 In a second terminal, select PX4 mode and run SkyLink:
 
 ```bash
