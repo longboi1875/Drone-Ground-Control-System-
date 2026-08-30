@@ -125,10 +125,13 @@ class MavsdkVehicle(VehicleAdapter):
     async def telemetry(self) -> AsyncIterator[TelemetrySnapshot]:
         drone = await self._connect()
         latest: dict[str, Any] = {}
+        revision = 0
 
         async def consume(name: str, stream: Any) -> None:
+            nonlocal revision
             async for value in stream:
                 latest[name] = value
+                revision += 1
 
         tasks = [
             asyncio.create_task(consume("position", drone.telemetry.position())),
@@ -139,6 +142,7 @@ class MavsdkVehicle(VehicleAdapter):
             asyncio.create_task(consume("armed", drone.telemetry.armed())),
             asyncio.create_task(consume("mode", drone.telemetry.flight_mode())),
         ]
+        last_revision = -1
         try:
             while True:
                 if all(
@@ -152,7 +156,7 @@ class MavsdkVehicle(VehicleAdapter):
                         "armed",
                         "mode",
                     )
-                ):
+                ) and revision != last_revision:
                     position = latest["position"]
                     velocity = latest["velocity"]
                     speed = math.hypot(velocity.north_m_s, velocity.east_m_s)
@@ -175,6 +179,7 @@ class MavsdkVehicle(VehicleAdapter):
                         armed=bool(latest["armed"]),
                         flightMode=str(latest["mode"]).split(".")[-1],
                     )
+                    last_revision = revision
                 await asyncio.sleep(0.2)
         finally:
             for task in tasks:
