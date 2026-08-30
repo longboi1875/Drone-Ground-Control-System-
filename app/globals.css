@@ -120,7 +120,9 @@ button { font: inherit; }
 .mission-runner button:disabled { cursor: not-allowed; opacity: .45; }
 .mission-runner [data-slot="native-select-wrapper"] { width: 100%; }
 .replay-controls { display: grid; grid-template-columns: 38px 38px repeat(4, 1fr); gap: 5px; }.replay-controls button { display: grid; place-items: center; min-width: 0; }.replay-controls button.active { border-color: var(--cyan); color: var(--cyan); background: #123242; }
+.replay-seek { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin: 14px 0 4px; color: #7c94a0; font: 700 10px var(--font-geist-mono); letter-spacing: .08em; }.replay-seek > div { grid-column: 1 / -1; }.replay-seek output { color: #d5e4e9; }
 .flight-list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px; border: 1px solid #203846; background: #0a1822; }.flight-list strong, .flight-list small { display: block; }.flight-list strong { color: #d5e4e9; font-size: 12px; }.flight-list small { margin-top: 3px; color: #627c89; font-size: 10px; }.flight-list button { display: flex; align-items: center; gap: 5px; min-height: 30px; padding: 0 8px; }
+.flight-actions { display: flex; gap: 5px; }
 .preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 20px; }.preset-grid button.active { border-color: var(--cyan); color: var(--cyan); background: #123242; }
 .link-panel label { margin: 16px 0; grid-template-columns: 1fr auto; }.link-panel label > div { grid-column: 1 / -1; }.link-panel output { color: #d5e4e9; }
 .link-stats { display: grid; gap: 6px; margin-top: 18px; }.link-stats div { display: grid; grid-template-columns: 1fr auto auto auto; gap: 10px; padding: 8px; border: 1px solid #203846; color: #6e8794; font: 9px var(--font-geist-mono); }.link-stats strong { color: #a8bcc5; }

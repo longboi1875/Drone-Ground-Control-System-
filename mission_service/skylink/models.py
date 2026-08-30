@@ -142,3 +142,7 @@ class ReplayControl(BaseModel):
         if self.speed not in {0.5, 1.0, 2.0, 4.0}:
             raise ValueError("speed must be one of 0.5, 1, 2, or 4")
         return self
+
+
+class FlightRename(BaseModel):
+    name: str = Field(min_length=1, max_length=80)

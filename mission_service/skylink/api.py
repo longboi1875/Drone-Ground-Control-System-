@@ -8,7 +8,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from skylink.config import Settings, settings
 from skylink.database import CommandConflictError
-from skylink.models import CommandRequest, LinkProfile, Mission, MissionCreate, ReplayControl
+from skylink.models import (
+    CommandRequest,
+    FlightRename,
+    LinkProfile,
+    Mission,
+    MissionCreate,
+    ReplayControl,
+)
 from skylink.service import MissionService
 
 
@@ -107,6 +114,13 @@ def create_app(config: Settings | None = None, service: MissionService | None = 
         if not frames:
             raise HTTPException(status_code=404, detail="flight not found")
         return {"id": flight_id, "telemetry": frames}
+
+    @app.patch("/api/flights/{flight_id}")
+    async def rename_flight(flight_id: UUID, request: FlightRename) -> dict[str, str]:
+        if not await mission_service.database.rename_flight(flight_id, request.name):
+            raise HTTPException(status_code=404, detail="flight not found")
+        await mission_service.emit(f"Flight named {request.name}", "info", "flight")
+        return {"id": str(flight_id), "name": request.name}
 
     @app.post("/api/flights/{flight_id}/replay")
     async def start_replay(flight_id: UUID) -> dict[str, Any]:

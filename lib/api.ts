@@ -55,6 +55,13 @@ export async function listFlights() {
   return request<FlightSummary[]>('/api/flights');
 }
 
+export async function renameFlight(id: string, name: string) {
+  return request<{ id: string; name: string }>(`/api/flights/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ name }),
+  });
+}
+
 export async function startReplay(id: string) {
   return request(`/api/flights/${id}/replay`, { method: 'POST' });
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, Download, FileUp, Flag, Pause, Play, RotateCcw, Trash2, Upload } from 'lucide-react';
+import { ChevronDown, ChevronUp, Download, FileUp, Flag, Pencil, Pause, Play, RotateCcw, Trash2, Upload } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Slider } from '@/components/ui/slider';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
-import { commandStatus, controlReplay, getLinkProfile, listFlights, saveMission, sendCommand, setLinkProfile, startReplay, uploadMission } from '@/lib/api';
+import { commandStatus, controlReplay, getLinkProfile, listFlights, renameFlight, saveMission, sendCommand, setLinkProfile, startReplay, uploadMission } from '@/lib/api';
 import type { CommandType, FlightSummary, GroundEvent, LinkProfile, Waypoint } from '@/lib/contracts';
 
 export function CommandControls({ enabled, addEvent }: { enabled: boolean; addEvent: (message: string, severity?: GroundEvent['severity']) => void }) {
@@ -188,15 +188,31 @@ export function FlightHistory({ addEvent }: { addEvent: (message: string, severi
   const [flights, setFlights] = useState<FlightSummary[]>([]);
   const [speed, setSpeed] = useState(1);
   const [playing, setPlaying] = useState(false);
+  const [position, setPosition] = useState(0);
+  const [replayLength, setReplayLength] = useState(1);
   useEffect(() => { void listFlights().then(setFlights).catch(() => setFlights([])); }, []);
 
-  async function replay(id: string) {
+  async function replay(flight: FlightSummary) {
     try {
-      await startReplay(id);
+      await startReplay(flight.id);
       setPlaying(true);
+      setPosition(0);
+      setReplayLength(Math.max(1, flight.ended_at ? (new Date(flight.ended_at).getTime() - new Date(flight.started_at).getTime()) / 1000 : flight.telemetry_count / 5));
       addEvent('Replay started · commands locked', 'info');
     } catch (error) {
       addEvent(error instanceof Error ? error.message : 'Replay failed', 'warning');
+    }
+  }
+
+  async function rename(flight: FlightSummary) {
+    const name = window.prompt('Flight name', flight.name)?.trim();
+    if (!name || name === flight.name) return;
+    try {
+      await renameFlight(flight.id, name);
+      setFlights((current) => current.map((item) => item.id === flight.id ? { ...item, name } : item));
+      addEvent(`Flight named ${name}`, 'success');
+    } catch (error) {
+      addEvent(error instanceof Error ? error.message : 'Flight rename failed', 'warning');
     }
   }
 
@@ -207,11 +223,12 @@ export function FlightHistory({ addEvent }: { addEvent: (message: string, severi
         <button onClick={() => void controlReplay('restart', speed)}><RotateCcw size={15} /></button>
         {[0.5, 1, 2, 4].map((value) => <button className={speed === value ? 'active' : ''} key={value} onClick={() => { setSpeed(value); void controlReplay('play', value); }}>{value}×</button>)}
       </div>
+      <label className="replay-seek">REPLAY POSITION <output>{Math.round(position)} s</output><Slider min={0} max={replayLength} step={0.5} value={position} onValueChange={(value) => setPosition(value as number)} onValueCommitted={(value) => void controlReplay('seek', speed, value as number)} /></label>
       <ol className="flight-list">
         {flights.map((flight) => (
           <li key={flight.id}>
-            <div><strong>{flight.name}</strong><small>{new Date(flight.started_at).toLocaleString()} · {flight.telemetry_count} frames</small></div>
-            <button onClick={() => void replay(flight.id)}><Play size={13} /> REPLAY</button>
+            <div><strong>{flight.name}</strong><small>{new Date(flight.started_at).toLocaleString()} · {flight.outcome} · {flight.command_count} cmds · {flight.telemetry_count} frames</small></div>
+            <div className="flight-actions"><button aria-label={`Rename ${flight.name}`} onClick={() => void rename(flight)}><Pencil size={13} /></button><button onClick={() => void replay(flight)}><Play size={13} /> REPLAY</button></div>
           </li>
         ))}
       </ol>

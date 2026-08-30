@@ -49,3 +49,14 @@ async def test_events_are_recorded_with_the_flight(tmp_path) -> None:
     assert row is not None
     assert row[0] == str(flight_id)
     assert "Vehicle link lost" in row[1]
+
+
+@pytest.mark.asyncio
+async def test_flight_can_be_named(tmp_path) -> None:
+    database = Database(tmp_path / "test.db")
+    await database.connect()
+    flight_id = uuid4()
+    await database.start_flight(flight_id, "Demo flight", "demo")
+
+    assert await database.rename_flight(flight_id, "Perimeter run") is True
+    assert (await database.list_flights())[0]["name"] == "Perimeter run"

@@ -93,6 +93,14 @@ class Database:
             )
             await db.commit()
 
+    async def rename_flight(self, flight_id: UUID, name: str) -> bool:
+        async with aiosqlite.connect(self.path) as db:
+            cursor = await db.execute(
+                "UPDATE flights SET name = ? WHERE id = ?", (name, str(flight_id))
+            )
+            await db.commit()
+            return cursor.rowcount > 0
+
     async def log_telemetry(self, flight_id: UUID, snapshot: TelemetrySnapshot) -> None:
         async with aiosqlite.connect(self.path) as db:
             await db.execute(
