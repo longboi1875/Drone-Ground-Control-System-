@@ -16,7 +16,30 @@ git submodule update --init --depth 1 \
   Tools/simulation/gz \
   src/lib/events/libevents \
   src/modules/mavlink/mavlink
-./Tools/setup/macos.sh --sim-tools
-make px4_sitl_default
+
+# PX4 v1.17's macOS helper still points at Homebrew meta-formulae that became
+# no-ops in 2026. Install the simulator dependencies explicitly so this pinned
+# release remains reproducible.
+brew tap PX4/px4
+brew tap osrf/simulation
+if brew trust --help >/dev/null 2>&1; then
+  brew trust PX4/px4
+  brew trust osrf/simulation
+fi
+brew install \
+  astyle ccache cmake fastdds flock genromfs kconfig-frontends ncurses ninja \
+  exiftool glog graphviz gstreamer opencv@4 osrf/simulation/gz-harmonic protobuf
+
+if ! brew list --cask xquartz >/dev/null 2>&1; then
+  brew install --cask xquartz
+fi
+
+if [[ ! -x "$PX4_DIR/.venv/bin/python" ]]; then
+  python3.12 -m venv "$PX4_DIR/.venv"
+fi
+"$PX4_DIR/.venv/bin/pip" install future
+"$PX4_DIR/.venv/bin/pip" install -r "$PX4_DIR/Tools/setup/requirements.txt"
+
+PATH="$PX4_DIR/.venv/bin:$PATH" make px4_sitl_default
 
 echo "PX4 $PX4_VERSION is ready at $PX4_DIR"

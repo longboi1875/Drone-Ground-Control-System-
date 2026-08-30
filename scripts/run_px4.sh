@@ -13,4 +13,5 @@ cd "$PX4_DIR"
 export PX4_HOME_LAT=49.2606
 export PX4_HOME_LON=-123.2460
 export PX4_HOME_ALT=70
+export PATH="$PX4_DIR/.venv/bin:$PATH"
 make px4_sitl gz_x500
